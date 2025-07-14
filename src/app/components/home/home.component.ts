@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { DataService, SqlConnectionCredentials, PostgresConnectionCredentials, TableColumn } from '../../services/data.service';
@@ -8,7 +8,8 @@ import { DataService, SqlConnectionCredentials, PostgresConnectionCredentials, T
   standalone: true,
   imports: [CommonModule, FormsModule, ReactiveFormsModule],
   templateUrl: './home.component.html',
-  styleUrl: './home.component.css'
+  styleUrl: './home.component.css',
+  encapsulation: ViewEncapsulation.None  // 🔥 THIS IS THE KEY FIX!
 })
 export class HomeComponent implements OnInit {
   activeTab: string = 'dashboard';
@@ -19,6 +20,9 @@ export class HomeComponent implements OnInit {
   // Modal state
   showConnectionModal: boolean = false;
   connectionTab: string = 'sqlserver';
+
+  // Mobile responsive state
+  mobileSidebarOpen: boolean = false;
 
   // Data Source Forms
   sqlServerForm: FormGroup;
@@ -60,12 +64,24 @@ export class HomeComponent implements OnInit {
     // Initialize component
   }
 
+  // Mobile Sidebar Methods
+  toggleMobileSidebar(): void {
+    this.mobileSidebarOpen = !this.mobileSidebarOpen;
+  }
+
+  closeMobileSidebar(): void {
+    this.mobileSidebarOpen = false;
+  }
+
   setActiveTab(tab: string): void {
     if (tab !== 'dashboard' && !this.isConnected) {
       return; // Prevent navigation to data tabs when not connected
     }
     
     this.activeTab = tab;
+    
+    // Close mobile sidebar when tab is selected
+    this.closeMobileSidebar();
     
     // Auto-load data when switching to relevant tabs
     if (tab === 'metadata' || tab === 'tables') {
