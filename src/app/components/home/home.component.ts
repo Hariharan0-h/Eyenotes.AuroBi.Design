@@ -1,7 +1,8 @@
-import { Component, OnInit, ViewEncapsulation } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { DataService, SqlConnectionCredentials, PostgresConnectionCredentials, TableColumn } from '../../services/data.service';
+import { Subscription, timer } from 'rxjs';
 
 @Component({
   selector: 'app-home',
@@ -9,13 +10,18 @@ import { DataService, SqlConnectionCredentials, PostgresConnectionCredentials, T
   imports: [CommonModule, FormsModule, ReactiveFormsModule],
   templateUrl: './home.component.html',
   styleUrl: './home.component.css',
-  encapsulation: ViewEncapsulation.None  // 🔥 THIS IS THE KEY FIX!
+  encapsulation: ViewEncapsulation.None
 })
-export class HomeComponent implements OnInit {
+export class HomeComponent implements OnInit, OnDestroy {
   activeTab: string = 'dashboard';
   connectionStatus: string = '';
   isConnected: boolean = false;
   isLoading: boolean = false;
+
+  // Connection health monitoring
+  private healthSubscription: Subscription = new Subscription();
+  private retryCount: number = 0;
+  private maxRetries: number = 3;
 
   // Modal state
   showConnectionModal: boolean = false;
@@ -61,9 +67,196 @@ export class HomeComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    // Initialize component
+    // Subscribe to connection health monitoring
+    this.healthSubscription.add(
+      this.dataService.connectionHealth$.subscribe(isHealthy => {
+        if (this.isConnected !== isHealthy) {
+          this.isConnected = isHealthy;
+          if (!isHealthy && this.connectionStatus.includes('success')) {
+            this.connectionStatus = 'Connection lost - attempting to reconnect...';
+          }
+        }
+      })
+    );
+
+    // Check initial connection health
+    this.checkConnectionHealth();
   }
 
+  ngOnDestroy(): void {
+    this.healthSubscription.unsubscribe();
+    this.dataService.stopHealthMonitoring();
+  }
+
+  private async checkConnectionHealth(): Promise<void> {
+    try {
+      const health = await this.dataService.checkConnectionHealth().toPromise();
+      this.isConnected = health?.isHealthy || false;
+      if (!this.isConnected && !this.connectionStatus) {
+        this.connectionStatus = 'Not connected';
+      }
+    } catch (error) {
+      this.isConnected = false;
+      if (!this.connectionStatus) {
+        this.connectionStatus = 'Not connected';
+      }
+    }
+  }
+
+  // Connection Methods with Retry Logic
+  private async executeWithRetry<T>(operation: () => Promise<T>): Promise<T> {
+    for (let attempt = 1; attempt <= this.maxRetries; attempt++) {
+      try {
+        return await operation();
+      } catch (error: any) {
+        console.error(`Attempt ${attempt} failed:`, error);
+        
+        if (attempt === this.maxRetries) {
+          throw error;
+        }
+        
+        // Wait before retry (exponential backoff)
+        await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt) * 1000));
+      }
+    }
+    throw new Error('All retry attempts failed');
+  }
+
+  connectToSqlServer(): void {
+    if (this.sqlServerForm.valid) {
+      this.isLoading = true;
+      const credentials: SqlConnectionCredentials = this.sqlServerForm.value;
+      
+      console.log('Connecting to SQL Server with:', credentials);
+      
+      this.executeWithRetry(async () => {
+        return this.dataService.connectToSqlServer(credentials).toPromise();
+      }).then(response => {
+        console.log('SQL Server response:', response);
+        this.connectionStatus = response || 'Connected successfully';
+        this.isConnected = this.isSuccessResponse(this.connectionStatus);
+        this.isLoading = false;
+        
+        if (this.isConnected) {
+          this.loadTables();
+          this.closeConnectionModal();
+        }
+      }).catch(error => {
+        console.error('SQL Server connection error:', error);
+        this.connectionStatus = `Error: ${error.message}`;
+        this.isConnected = false;
+        this.isLoading = false;
+      });
+    }
+  }
+
+  connectToPostgres(): void {
+    if (this.postgresForm.valid) {
+      this.isLoading = true;
+      const credentials: PostgresConnectionCredentials = this.postgresForm.value;
+      
+      console.log('Connecting to PostgreSQL with:', credentials);
+      
+      this.executeWithRetry(async () => {
+        return this.dataService.connectToPostgres(credentials).toPromise();
+      }).then(response => {
+        console.log('PostgreSQL response:', response);
+        this.connectionStatus = response || 'Connected successfully';
+        this.isConnected = this.isSuccessResponse(this.connectionStatus);
+        this.isLoading = false;
+        
+        if (this.isConnected) {
+          this.loadTables();
+          this.closeConnectionModal();
+        }
+      }).catch(error => {
+        console.error('PostgreSQL connection error:', error);
+        this.connectionStatus = `Error: ${error.message}`;
+        this.isConnected = false;
+        this.isLoading = false;
+      });
+    }
+  }
+
+  // Enhanced data loading with error handling
+  loadTables(): void {
+    this.isLoading = true;
+    console.log('Loading tables...');
+    
+    this.executeWithRetry(async () => {
+      return this.dataService.getAllTables().toPromise();
+    }).then(tables => {
+      console.log('Tables response:', tables);
+      this.tables = tables || [];
+      console.log('Loaded tables:', this.tables);
+      this.isLoading = false;
+    }).catch(error => {
+      console.error('Error loading tables:', error);
+      this.tables = [];
+      this.isLoading = false;
+      
+      // Update connection status if tables can't be loaded
+      if (this.tables.length === 0 && this.isConnected) {
+        this.connectionStatus = `Connected but cannot load tables: ${error.message}`;
+      }
+    });
+  }
+
+  loadTableColumns(): void {
+    console.log('Loading columns for table:', this.selectedTable);
+    
+    this.executeWithRetry(async () => {
+      return this.dataService.getTableColumns(this.selectedTable).toPromise();
+    }).then(columns => {
+      console.log('Columns response:', columns);
+      this.columns = columns || [];
+      console.log('Loaded columns:', this.columns);
+    }).catch(error => {
+      console.error('Error loading columns:', error);
+      this.columns = [];
+    });
+  }
+
+  loadTableData(): void {
+    console.log('Loading data for table:', this.selectedTable);
+    
+    this.executeWithRetry(async () => {
+      return this.dataService.getTableData(this.selectedTable).toPromise();
+    }).then(data => {
+      console.log('Table data response:', data);
+      this.tableData = data || [];
+      console.log('Loaded table data:', this.tableData);
+    }).catch(error => {
+      console.error('Error loading table data:', error);
+      this.tableData = [];
+    });
+  }
+
+  runCustomQuery(): void {
+    if (this.customQuery.trim()) {
+      this.isLoading = true;
+      console.log('Running query (exact case):', this.customQuery);
+      
+      this.executeWithRetry(async () => {
+        return this.dataService.runQuery(this.customQuery).toPromise();
+      }).then(results => {
+        console.log('Query response:', results);
+        this.queryResults = results || [];
+        console.log('Query results:', this.queryResults);
+        this.isLoading = false;
+      }).catch(error => {
+        console.error('Error running query:', error);
+        this.queryResults = [];
+        this.isLoading = false;
+        
+        // Show user-friendly error message
+        alert(`Query failed: ${error.message}`);
+      });
+    }
+  }
+
+  // Rest of the methods remain the same...
+  
   // Mobile Sidebar Methods
   toggleMobileSidebar(): void {
     this.mobileSidebarOpen = !this.mobileSidebarOpen;
@@ -75,15 +268,12 @@ export class HomeComponent implements OnInit {
 
   setActiveTab(tab: string): void {
     if (tab !== 'dashboard' && !this.isConnected) {
-      return; // Prevent navigation to data tabs when not connected
+      return;
     }
     
     this.activeTab = tab;
-    
-    // Close mobile sidebar when tab is selected
     this.closeMobileSidebar();
     
-    // Auto-load data when switching to relevant tabs
     if (tab === 'metadata' || tab === 'tables') {
       if (this.isConnected && this.tables.length === 0) {
         this.loadTables();
@@ -100,65 +290,6 @@ export class HomeComponent implements OnInit {
     this.showConnectionModal = false;
   }
 
-  // Data Source Connection Methods
-  connectToSqlServer(): void {
-    if (this.sqlServerForm.valid) {
-      this.isLoading = true;
-      const credentials: SqlConnectionCredentials = this.sqlServerForm.value;
-      
-      console.log('Connecting to SQL Server with:', credentials);
-      
-      this.dataService.connectToSqlServer(credentials).subscribe({
-        next: (response: string) => {
-          console.log('SQL Server response:', response);
-          this.connectionStatus = response;
-          this.isConnected = this.isSuccessResponse(response);
-          this.isLoading = false;
-          
-          if (this.isConnected) {
-            this.loadTables(); // Auto-load tables on successful connection
-            this.closeConnectionModal();
-          }
-        },
-        error: (error: any) => {
-          console.error('SQL Server connection error:', error);
-          this.connectionStatus = `Error: ${this.extractErrorMessage(error)}`;
-          this.isConnected = false;
-          this.isLoading = false;
-        }
-      });
-    }
-  }
-
-  connectToPostgres(): void {
-    if (this.postgresForm.valid) {
-      this.isLoading = true;
-      const credentials: PostgresConnectionCredentials = this.postgresForm.value;
-      
-      console.log('Connecting to PostgreSQL with:', credentials);
-      
-      this.dataService.connectToPostgres(credentials).subscribe({
-        next: (response: string) => {
-          console.log('PostgreSQL response:', response);
-          this.connectionStatus = response;
-          this.isConnected = this.isSuccessResponse(response);
-          this.isLoading = false;
-          
-          if (this.isConnected) {
-            this.loadTables(); // Auto-load tables on successful connection
-            this.closeConnectionModal();
-          }
-        },
-        error: (error: any) => {
-          console.error('PostgreSQL connection error:', error);
-          this.connectionStatus = `Error: ${this.extractErrorMessage(error)}`;
-          this.isConnected = false;
-          this.isLoading = false;
-        }
-      });
-    }
-  }
-
   onFileSelected(event: any): void {
     this.selectedFile = event.target.files[0];
   }
@@ -169,25 +300,24 @@ export class HomeComponent implements OnInit {
       
       console.log('Uploading Excel file:', this.selectedFile.name);
       
-      this.dataService.uploadExcel(this.selectedFile).subscribe({
-        next: (response: string) => {
-          console.log('Excel upload response:', response);
-          this.connectionStatus = response;
-          this.isConnected = this.isSuccessResponse(response);
-          this.isLoading = false;
-          this.selectedFile = null;
-          
-          if (this.isConnected) {
-            this.loadTables(); // Auto-load tables on successful upload
-            this.closeConnectionModal();
-          }
-        },
-        error: (error: any) => {
-          console.error('Excel upload error:', error);
-          this.connectionStatus = `Error: ${this.extractErrorMessage(error)}`;
-          this.isConnected = false;
-          this.isLoading = false;
+      this.executeWithRetry(async () => {
+        return this.dataService.uploadExcel(this.selectedFile!).toPromise();
+      }).then(response => {
+        console.log('Excel upload response:', response);
+        this.connectionStatus = response || 'Excel uploaded successfully';
+        this.isConnected = this.isSuccessResponse(this.connectionStatus);
+        this.isLoading = false;
+        this.selectedFile = null;
+        
+        if (this.isConnected) {
+          this.loadTables();
+          this.closeConnectionModal();
         }
+      }).catch(error => {
+        console.error('Excel upload error:', error);
+        this.connectionStatus = `Error: ${error.message}`;
+        this.isConnected = false;
+        this.isLoading = false;
       });
     }
   }
@@ -208,31 +338,6 @@ export class HomeComponent implements OnInit {
     });
   }
 
-  // Metadata Methods
-  loadTables(): void {
-    this.isLoading = true;
-    console.log('Loading tables...');
-    
-    this.dataService.getAllTables().subscribe({
-      next: (tables: string[]) => {
-        console.log('Tables response:', tables);
-        this.tables = tables;
-        console.log('Loaded tables:', this.tables);
-        this.isLoading = false;
-      },
-      error: (error: any) => {
-        console.error('Error loading tables:', error);
-        this.tables = [];
-        this.isLoading = false;
-        
-        // Show error in connection status if no tables can be loaded
-        if (this.tables.length === 0) {
-          this.connectionStatus = `Connected but cannot load tables: ${this.extractErrorMessage(error)}`;
-        }
-      }
-    });
-  }
-
   selectTable(tableName: string): void {
     this.selectedTable = tableName;
     this.onTableSelected();
@@ -242,61 +347,6 @@ export class HomeComponent implements OnInit {
     if (this.selectedTable) {
       this.loadTableColumns();
       this.loadTableData();
-    }
-  }
-
-  loadTableColumns(): void {
-    console.log('Loading columns for table:', this.selectedTable);
-    
-    this.dataService.getTableColumns(this.selectedTable).subscribe({
-      next: (columns: TableColumn[]) => {
-        console.log('Columns response:', columns);
-        this.columns = columns;
-        console.log('Loaded columns:', this.columns);
-      },
-      error: (error: any) => {
-        console.error('Error loading columns:', error);
-        this.columns = [];
-      }
-    });
-  }
-
-  loadTableData(): void {
-    console.log('Loading data for table:', this.selectedTable);
-    
-    this.dataService.getTableData(this.selectedTable).subscribe({
-      next: (data: any[]) => {
-        console.log('Table data response:', data);
-        this.tableData = data;
-        console.log('Loaded table data:', this.tableData);
-      },
-      error: (error: any) => {
-        console.error('Error loading table data:', error);
-        this.tableData = [];
-      }
-    });
-  }
-
-  // Query Methods
-  runCustomQuery(): void {
-    if (this.customQuery.trim()) {
-      this.isLoading = true;
-      console.log('Running query (exact case):', this.customQuery);
-      
-      // Pass the query exactly as typed, preserve case sensitivity
-      this.dataService.runQuery(this.customQuery).subscribe({
-        next: (results: any[]) => {
-          console.log('Query response:', results);
-          this.queryResults = results;
-          console.log('Query results:', this.queryResults);
-          this.isLoading = false;
-        },
-        error: (error: any) => {
-          console.error('Error running query:', error);
-          this.queryResults = [];
-          this.isLoading = false;
-        }
-      });
     }
   }
 
@@ -310,49 +360,20 @@ export class HomeComponent implements OnInit {
     return Object.keys(obj || {});
   }
 
-  getFormErrors(form: FormGroup): string[] {
-    const errors: string[] = [];
-    Object.keys(form.controls).forEach(key => {
-      const control = form.get(key);
-      if (control && control.invalid && control.touched) {
-        errors.push(`${key} is required`);
-      }
-    });
-    return errors;
-  }
-
-  // Response handling utilities
-  extractErrorMessage(error: any): string {
-    if (error.error) {
-      if (typeof error.error === 'string') {
-        return error.error;
-      } else if (error.error.message) {
-        return error.error.message;
-      } else if (error.error.title) {
-        return error.error.title;
-      }
-    }
-    return error.message || error.statusText || 'Unknown error occurred';
-  }
-
   isSuccessResponse(message: string): boolean {
-    // Determine if the response indicates success
     const successKeywords = ['success', 'connected', 'created', 'uploaded'];
     const errorKeywords = ['error', 'failed', 'invalid', 'not found'];
     
     const lowerMessage = message.toLowerCase();
     
-    // Check for error keywords first
     if (errorKeywords.some(keyword => lowerMessage.includes(keyword))) {
       return false;
     }
     
-    // Then check for success keywords
     if (successKeywords.some(keyword => lowerMessage.includes(keyword))) {
       return true;
     }
     
-    // If no clear indicators, assume success if no "error" mentioned
     return !lowerMessage.includes('error');
   }
 
@@ -367,7 +388,6 @@ export class HomeComponent implements OnInit {
     console.log('API Base URL:', this.dataService.baseUrl);
     console.log('=================');
     
-    // Show alert with key info
     alert(`Debug Info:
 Connection Status: ${this.connectionStatus}
 Is Connected: ${this.isConnected}
