@@ -1,6 +1,6 @@
 export const environment = {
   production: false,
-  apiUrl: 'https://localhost:7246/api', // Update this to match your actual API URL
+  apiUrl: 'https://localhost:7246/api',
   endpoints: {
     dataSource: {
       connectSqlServer: '/DataSource/connect-sqlserver',
@@ -13,6 +13,9 @@ export const environment = {
       getColumns: '/MetaData/columns',
       getTableData: '/MetaData/data',
       runQuery: '/MetaData/run-query'
+    },
+    health: {
+      connection: '/Health/connection'
     }
   }
 };
