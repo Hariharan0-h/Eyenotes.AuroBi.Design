@@ -25,14 +25,19 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   // Modal state
   showConnectionModal: boolean = false;
-  connectionTab: string = 'sqlserver';
+  connectionTab: string = 'database'; // Changed from 'sqlserver' to 'database'
 
   // Mobile responsive state
   mobileSidebarOpen: boolean = false;
 
-  // Data Source Forms
-  sqlServerForm: FormGroup;
-  postgresForm: FormGroup;
+  // UPDATED: Single database form instead of separate forms
+  selectedDatabaseType: string = 'sqlserver';
+  databaseForm: FormGroup;
+  showPassword: boolean = false;
+  connectionTestResult: string = '';
+  connectionTestSuccess: boolean = false;
+
+  // File upload
   selectedFile: File | null = null;
 
   // Metadata
@@ -49,17 +54,10 @@ export class HomeComponent implements OnInit, OnDestroy {
     private dataService: DataService,
     private fb: FormBuilder
   ) {
-    this.sqlServerForm = this.fb.group({
+    // UPDATED: Single unified database form
+    this.databaseForm = this.fb.group({
       host: ['', [Validators.required]],
       port: [1433, [Validators.required, Validators.min(1), Validators.max(65535)]],
-      username: ['', [Validators.required]],
-      password: ['', [Validators.required]],
-      database: ['', [Validators.required]]
-    });
-
-    this.postgresForm = this.fb.group({
-      host: ['', [Validators.required]],
-      port: [5432, [Validators.required, Validators.min(1), Validators.max(65535)]],
       username: ['', [Validators.required]],
       password: ['', [Validators.required]],
       database: ['', [Validators.required]]
@@ -81,11 +79,105 @@ export class HomeComponent implements OnInit, OnDestroy {
 
     // Check initial connection health
     this.checkConnectionHealth();
+    
+    // Set initial port based on default database type
+    this.onDatabaseTypeChange();
   }
 
   ngOnDestroy(): void {
     this.healthSubscription.unsubscribe();
     this.dataService.stopHealthMonitoring();
+  }
+
+  // NEW: Database type change handler
+  onDatabaseTypeChange(): void {
+    const defaultPort = this.selectedDatabaseType === 'sqlserver' ? 1433 : 5432;
+    this.databaseForm.patchValue({ port: defaultPort });
+    this.connectionTestResult = '';
+    this.connectionTestSuccess = false;
+  }
+
+  // NEW: Password visibility toggle
+  togglePasswordVisibility(): void {
+    this.showPassword = !this.showPassword;
+  }
+
+  toggleDatabaseType(): void {
+    this.selectedDatabaseType = this.selectedDatabaseType === 'sqlserver' ? 'postgresql' : 'sqlserver';
+    this.onDatabaseTypeChange();
+  }
+
+  // NEW: Test connection before actual connection
+  testConnection(): void {
+    if (this.databaseForm.valid) {
+      this.isLoading = true;
+      this.connectionTestResult = '';
+      
+      const credentials = this.databaseForm.value;
+      console.log(`Testing ${this.selectedDatabaseType} connection...`);
+      
+      const connectionMethod = this.selectedDatabaseType === 'sqlserver' 
+        ? this.dataService.connectToSqlServer(credentials as SqlConnectionCredentials)
+        : this.dataService.connectToPostgres(credentials as PostgresConnectionCredentials);
+      
+      this.executeWithRetry(async () => {
+        return connectionMethod.toPromise();
+      }).then(response => {
+        console.log('Connection test response:', response);
+        this.connectionTestResult = response || 'Connection test successful';
+        this.connectionTestSuccess = this.isSuccessResponse(this.connectionTestResult);
+        this.isLoading = false;
+      }).catch(error => {
+        console.error('Connection test error:', error);
+        this.connectionTestResult = `Test failed: ${error.message}`;
+        this.connectionTestSuccess = false;
+        this.isLoading = false;
+      });
+    }
+  }
+
+  // UPDATED: Unified database connection method
+  connectToDatabase(): void {
+    if (this.databaseForm.valid) {
+      this.isLoading = true;
+      const credentials = this.databaseForm.value;
+      
+      console.log(`Connecting to ${this.selectedDatabaseType} with:`, credentials);
+      
+      const connectionMethod = this.selectedDatabaseType === 'sqlserver' 
+        ? this.dataService.connectToSqlServer(credentials as SqlConnectionCredentials)
+        : this.dataService.connectToPostgres(credentials as PostgresConnectionCredentials);
+      
+      this.executeWithRetry(async () => {
+        return connectionMethod.toPromise();
+      }).then(response => {
+        console.log(`${this.selectedDatabaseType} connection response:`, response);
+        this.connectionStatus = response || 'Connected successfully';
+        this.isConnected = this.isSuccessResponse(this.connectionStatus);
+        this.isLoading = false;
+        
+        if (this.isConnected) {
+          this.loadTables();
+          this.closeConnectionModal();
+        }
+      }).catch(error => {
+        console.error(`${this.selectedDatabaseType} connection error:`, error);
+        this.connectionStatus = `Error: ${error.message}`;
+        this.isConnected = false;
+        this.isLoading = false;
+      });
+    }
+  }
+
+  // LEGACY: Keep these methods for backward compatibility
+  connectToSqlServer(): void {
+    this.selectedDatabaseType = 'sqlserver';
+    this.connectToDatabase();
+  }
+
+  connectToPostgres(): void {
+    this.selectedDatabaseType = 'postgresql';
+    this.connectToDatabase();
   }
 
   private async checkConnectionHealth(): Promise<void> {
@@ -103,7 +195,6 @@ export class HomeComponent implements OnInit, OnDestroy {
     }
   }
 
-  // Connection Methods with Retry Logic
   private async executeWithRetry<T>(operation: () => Promise<T>): Promise<T> {
     for (let attempt = 1; attempt <= this.maxRetries; attempt++) {
       try {
@@ -115,70 +206,49 @@ export class HomeComponent implements OnInit, OnDestroy {
           throw error;
         }
         
-        // Wait before retry (exponential backoff)
         await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt) * 1000));
       }
     }
     throw new Error('All retry attempts failed');
   }
 
-  connectToSqlServer(): void {
-    if (this.sqlServerForm.valid) {
-      this.isLoading = true;
-      const credentials: SqlConnectionCredentials = this.sqlServerForm.value;
-      
-      console.log('Connecting to SQL Server with:', credentials);
-      
-      this.executeWithRetry(async () => {
-        return this.dataService.connectToSqlServer(credentials).toPromise();
-      }).then(response => {
-        console.log('SQL Server response:', response);
-        this.connectionStatus = response || 'Connected successfully';
-        this.isConnected = this.isSuccessResponse(this.connectionStatus);
-        this.isLoading = false;
-        
-        if (this.isConnected) {
-          this.loadTables();
-          this.closeConnectionModal();
-        }
-      }).catch(error => {
-        console.error('SQL Server connection error:', error);
-        this.connectionStatus = `Error: ${error.message}`;
-        this.isConnected = false;
-        this.isLoading = false;
-      });
+  // Modal Methods
+  openConnectionModal(): void {
+    this.showConnectionModal = true;
+    this.connectionTestResult = '';
+  }
+
+  closeConnectionModal(): void {
+    this.showConnectionModal = false;
+    this.connectionTestResult = '';
+    this.showPassword = false;
+  }
+
+  // Mobile Sidebar Methods
+  toggleMobileSidebar(): void {
+    this.mobileSidebarOpen = !this.mobileSidebarOpen;
+  }
+
+  closeMobileSidebar(): void {
+    this.mobileSidebarOpen = false;
+  }
+
+  setActiveTab(tab: string): void {
+    if (tab !== 'dashboard' && !this.isConnected) {
+      return;
+    }
+    
+    this.activeTab = tab;
+    this.closeMobileSidebar();
+    
+    if (tab === 'metadata' || tab === 'tables') {
+      if (this.isConnected && this.tables.length === 0) {
+        this.loadTables();
+      }
     }
   }
 
-  connectToPostgres(): void {
-    if (this.postgresForm.valid) {
-      this.isLoading = true;
-      const credentials: PostgresConnectionCredentials = this.postgresForm.value;
-      
-      console.log('Connecting to PostgreSQL with:', credentials);
-      
-      this.executeWithRetry(async () => {
-        return this.dataService.connectToPostgres(credentials).toPromise();
-      }).then(response => {
-        console.log('PostgreSQL response:', response);
-        this.connectionStatus = response || 'Connected successfully';
-        this.isConnected = this.isSuccessResponse(this.connectionStatus);
-        this.isLoading = false;
-        
-        if (this.isConnected) {
-          this.loadTables();
-          this.closeConnectionModal();
-        }
-      }).catch(error => {
-        console.error('PostgreSQL connection error:', error);
-        this.connectionStatus = `Error: ${error.message}`;
-        this.isConnected = false;
-        this.isLoading = false;
-      });
-    }
-  }
-
-  // Enhanced data loading with error handling
+  // Data loading methods
   loadTables(): void {
     this.isLoading = true;
     console.log('Loading tables...');
@@ -195,7 +265,6 @@ export class HomeComponent implements OnInit, OnDestroy {
       this.tables = [];
       this.isLoading = false;
       
-      // Update connection status if tables can't be loaded
       if (this.tables.length === 0 && this.isConnected) {
         this.connectionStatus = `Connected but cannot load tables: ${error.message}`;
       }
@@ -249,47 +318,12 @@ export class HomeComponent implements OnInit, OnDestroy {
         this.queryResults = [];
         this.isLoading = false;
         
-        // Show user-friendly error message
         alert(`Query failed: ${error.message}`);
       });
     }
   }
 
-  // Rest of the methods remain the same...
-  
-  // Mobile Sidebar Methods
-  toggleMobileSidebar(): void {
-    this.mobileSidebarOpen = !this.mobileSidebarOpen;
-  }
-
-  closeMobileSidebar(): void {
-    this.mobileSidebarOpen = false;
-  }
-
-  setActiveTab(tab: string): void {
-    if (tab !== 'dashboard' && !this.isConnected) {
-      return;
-    }
-    
-    this.activeTab = tab;
-    this.closeMobileSidebar();
-    
-    if (tab === 'metadata' || tab === 'tables') {
-      if (this.isConnected && this.tables.length === 0) {
-        this.loadTables();
-      }
-    }
-  }
-
-  // Modal Methods
-  openConnectionModal(): void {
-    this.showConnectionModal = true;
-  }
-
-  closeConnectionModal(): void {
-    this.showConnectionModal = false;
-  }
-
+  // File upload methods
   onFileSelected(event: any): void {
     this.selectedFile = event.target.files[0];
   }
@@ -381,6 +415,8 @@ export class HomeComponent implements OnInit, OnDestroy {
     console.log('=== DEBUG INFO ===');
     console.log('Connection Status:', this.connectionStatus);
     console.log('Is Connected:', this.isConnected);
+    console.log('Selected Database Type:', this.selectedDatabaseType);
+    console.log('Database Form Value:', this.databaseForm.value);
     console.log('Tables:', this.tables);
     console.log('Selected Table:', this.selectedTable);
     console.log('Columns:', this.columns);
@@ -391,6 +427,7 @@ export class HomeComponent implements OnInit, OnDestroy {
     alert(`Debug Info:
 Connection Status: ${this.connectionStatus}
 Is Connected: ${this.isConnected}
+Database Type: ${this.selectedDatabaseType}
 Tables Count: ${this.tables.length}
 API URL: ${this.dataService.baseUrl}
 Check browser console for detailed logs`);
