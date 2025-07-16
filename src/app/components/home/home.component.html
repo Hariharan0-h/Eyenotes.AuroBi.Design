@@ -3,16 +3,25 @@
   <div class="container-fluid px-4">
     <!-- Logo Section -->
     <div class="d-flex align-items-center">
-      <button class="btn btn-link text-white d-lg-none me-3 p-0" (click)="toggleMobileSidebar()" aria-label="Toggle navigation">
+      <button
+        class="btn btn-link text-white d-lg-none me-3 p-0"
+        (click)="toggleMobileSidebar()"
+        aria-label="Toggle navigation"
+      >
         <i class="bi bi-list fs-4"></i>
       </button>
-      <a class="navbar-brand d-flex align-items-center gap-3 text-white text-decoration-none" href="#">
+      <a
+        class="navbar-brand d-flex align-items-center gap-3 text-white text-decoration-none"
+        href="#"
+      >
         <div class="logo-icon">
           <i class="bi bi-bar-chart-line fs-4"></i>
         </div>
         <div class="logo-text">
           <h1 class="mb-0 fs-4 fw-bold">AuroBi</h1>
-          <small class="d-block text-white-50 fw-medium">Business Intelligence Platform</small>
+          <small class="d-block text-white-50 fw-medium"
+            >Business Intelligence Platform</small
+          >
         </div>
       </a>
     </div>
@@ -20,22 +29,39 @@
     <!-- Header Actions -->
     <div class="d-flex align-items-center gap-3">
       <!-- Connection Status -->
-      <div class="connection-status d-none d-md-flex" [ngClass]="{'connected': isConnected, 'disconnected': !isConnected}">
-        <span class="status-indicator" [ngClass]="{'bg-success': isConnected, 'bg-danger': !isConnected}"></span>
-        <span class="fw-medium">{{ connectionStatus || 'Not connected' }}</span>
+      <div
+        class="connection-status d-none d-md-flex"
+        [ngClass]="{ connected: isConnected, disconnected: !isConnected }"
+      >
+        <span
+          class="status-indicator"
+          [ngClass]="{ 'bg-success': isConnected, 'bg-danger': !isConnected }"
+        ></span>
+        <span class="fw-medium">{{ connectionStatus || "Not connected" }}</span>
       </div>
 
       <!-- Connect Button -->
-      <button class="btn btn-connect" (click)="openConnectionModal()" [class.btn-success]="isConnected" [class.btn-outline-light]="!isConnected">
+      <button
+        class="btn btn-connect"
+        (click)="openConnectionModal()"
+        [class.btn-success]="isConnected"
+        [class.btn-outline-light]="!isConnected"
+      >
         <i class="bi bi-hdd-network me-2"></i>
-        <span class="d-none d-sm-inline">{{ isConnected ? 'Connected' : 'Connect' }}</span>
+        <span class="d-none d-sm-inline">{{
+          isConnected ? "Connected" : "Connect"
+        }}</span>
       </button>
     </div>
   </div>
 </nav>
 
 <!-- Sidebar Overlay -->
-<div class="sidebar-overlay" [class.show]="mobileSidebarOpen" (click)="closeMobileSidebar()"></div>
+<div
+  class="sidebar-overlay"
+  [class.show]="mobileSidebarOpen"
+  (click)="closeMobileSidebar()"
+></div>
 
 <!-- Main Layout -->
 <div class="main-wrapper">
@@ -46,34 +72,52 @@
       <div class="nav-section mb-4">
         <h6 class="nav-section-title">Data Management</h6>
         <nav class="nav flex-column">
-          <a class="nav-link-custom" 
-             [class.active]="activeTab === 'dashboard'" 
-             (click)="setActiveTab('dashboard')" 
-             role="button">
+          <a
+            class="nav-link-custom"
+            [class.active]="activeTab === 'dashboard'"
+            (click)="setActiveTab('dashboard')"
+            role="button"
+          >
             <i class="bi bi-speedometer2"></i>
             <span>Dashboard</span>
           </a>
-          <a class="nav-link-custom" 
-             [class.active]="activeTab === 'metadata'" 
-             [class.disabled]="!isConnected" 
-             (click)="setActiveTab('metadata')" 
-             role="button">
+          <a
+            class="nav-link-custom"
+            [class.active]="activeTab === 'metadata'"
+            [class.disabled]="!isConnected"
+            (click)="setActiveTab('metadata')"
+            role="button"
+          >
             <i class="bi bi-file-earmark-text"></i>
             <span>Metadata</span>
           </a>
-          <a class="nav-link-custom" 
-             [class.active]="activeTab === 'tables'" 
-             [class.disabled]="!isConnected" 
-             (click)="setActiveTab('tables')" 
-             role="button">
+          <a
+            class="nav-link-custom"
+            [class.active]="activeTab === 'tables'"
+            [class.disabled]="!isConnected"
+            (click)="setActiveTab('tables')"
+            role="button"
+          >
             <i class="bi bi-table"></i>
             <span>Tables</span>
           </a>
-          <a class="nav-link-custom" 
-             [class.active]="activeTab === 'query'" 
-             [class.disabled]="!isConnected" 
-             (click)="setActiveTab('query')" 
-             role="button">
+          <a
+            class="nav-link-custom"
+            [class.active]="activeTab === 'reports'"
+            [class.disabled]="!isConnected"
+            (click)="setActiveTab('reports')"
+            role="button"
+          >
+            <i class="bi bi-file-earmark-richtext"></i>
+            <span>Reports</span>
+          </a>
+          <a
+            class="nav-link-custom"
+            [class.active]="activeTab === 'query'"
+            [class.disabled]="!isConnected"
+            (click)="setActiveTab('query')"
+            role="button"
+          >
             <i class="bi bi-code-slash"></i>
             <span>Query Builder</span>
           </a>
@@ -100,10 +144,16 @@
   <!-- Main Content -->
   <main class="main-content">
     <div class="container-fluid p-4">
-      
       <!-- Loading Overlay -->
-      <div *ngIf="isLoading" class="loading-overlay d-flex flex-column align-items-center justify-content-center">
-        <div class="spinner-border text-primary mb-3" style="width: 3rem; height: 3rem;" role="status">
+      <div
+        *ngIf="isLoading"
+        class="loading-overlay d-flex flex-column align-items-center justify-content-center"
+      >
+        <div
+          class="spinner-border text-primary mb-3"
+          style="width: 3rem; height: 3rem"
+          role="status"
+        >
           <span class="visually-hidden">Loading...</span>
         </div>
         <h5 class="text-white">Loading...</h5>
@@ -115,25 +165,30 @@
         <div class="welcome-hero mb-5">
           <div class="hero-content text-center text-white p-5 rounded-4">
             <h1 class="display-4 fw-bold mb-3">Welcome to AuroBi</h1>
-            <p class="lead mb-4 mx-auto" style="max-width: 600px;">
-              Connect to your data sources and start exploring with powerful business intelligence tools. 
-              Transform raw data into meaningful insights.
+            <p class="lead mb-4 mx-auto" style="max-width: 600px">
+              Connect to your data sources and start exploring with powerful
+              business intelligence tools. Transform raw data into meaningful
+              insights.
             </p>
-            
+
             <!-- Quick Action Cards -->
             <div class="row g-3 justify-content-center mt-4">
               <div class="col-md-6 col-lg-4">
                 <div class="action-card h-100" (click)="openConnectionModal()">
                   <i class="bi bi-hdd-network fs-2 mb-3"></i>
                   <h5 class="fw-bold">Connect Data Source</h5>
-                  <p class="mb-0 opacity-75">SQL Server, PostgreSQL, or Excel files</p>
+                  <p class="mb-0 opacity-75">
+                    SQL Server, PostgreSQL, or Excel files
+                  </p>
                 </div>
               </div>
               <div class="col-md-6 col-lg-4">
                 <div class="action-card h-100" (click)="downloadTemplate()">
                   <i class="bi bi-download fs-2 mb-3"></i>
                   <h5 class="fw-bold">Download Template</h5>
-                  <p class="mb-0 opacity-75">Excel format with predefined schema</p>
+                  <p class="mb-0 opacity-75">
+                    Excel format with predefined schema
+                  </p>
                 </div>
               </div>
             </div>
@@ -188,30 +243,49 @@
       <div *ngIf="activeTab === 'metadata'" class="tab-content-wrapper">
         <div class="page-header text-center mb-5">
           <h2 class="display-6 fw-bold text-primary mb-2">Database Metadata</h2>
-          <p class="lead text-muted">Explore your database structure and relationships with detailed schema information</p>
+          <p class="lead text-muted">
+            Explore your database structure and relationships with detailed
+            schema information
+          </p>
         </div>
-        
+
         <div class="row g-4">
           <!-- Tables List -->
           <div class="col-lg-4">
             <div class="card h-100 border-0 shadow-sm">
-              <div class="card-header bg-white border-bottom-0 d-flex justify-content-between align-items-center">
+              <div
+                class="card-header bg-white border-bottom-0 d-flex justify-content-between align-items-center"
+              >
                 <h5 class="mb-0 fw-bold">Tables Overview</h5>
-                <button class="btn btn-outline-primary btn-sm" (click)="loadTables()" [disabled]="isLoading">
+                <button
+                  class="btn btn-outline-primary btn-sm"
+                  (click)="loadTables()"
+                  [disabled]="isLoading"
+                >
                   <i class="bi bi-arrow-clockwise me-1"></i>Refresh
                 </button>
               </div>
               <div class="card-body p-0">
                 <div class="table-list">
-                  <div *ngIf="tables.length === 0 && !isLoading" class="empty-state text-center p-5">
-                    <i class="bi bi-table text-muted mb-3" style="font-size: 3rem;"></i>
+                  <div
+                    *ngIf="tables.length === 0 && !isLoading"
+                    class="empty-state text-center p-5"
+                  >
+                    <i
+                      class="bi bi-table text-muted mb-3"
+                      style="font-size: 3rem"
+                    ></i>
                     <h6 class="text-muted">No tables found</h6>
-                    <small class="text-muted">Connect to a data source to view available tables</small>
+                    <small class="text-muted"
+                      >Connect to a data source to view available tables</small
+                    >
                   </div>
-                  <div *ngFor="let table of tables" 
-                       class="table-item p-3 border-bottom" 
-                       [class.active]="selectedTable === table" 
-                       (click)="selectTable(table)">
+                  <div
+                    *ngFor="let table of tables"
+                    class="table-item p-3 border-bottom"
+                    [class.active]="selectedTable === table"
+                    (click)="selectTable(table)"
+                  >
                     <i class="bi bi-table me-2 text-primary"></i>
                     <span class="fw-medium">{{ table }}</span>
                   </div>
@@ -222,10 +296,15 @@
 
           <!-- Schema Details -->
           <div class="col-lg-8">
-            <div *ngIf="selectedTable && columns.length > 0" class="card border-0 shadow-sm">
+            <div
+              *ngIf="selectedTable && columns.length > 0"
+              class="card border-0 shadow-sm"
+            >
               <div class="card-header bg-white border-bottom-0">
                 <h5 class="mb-0 fw-bold">Schema: {{ selectedTable }}</h5>
-                <small class="text-muted">Column definitions and constraints</small>
+                <small class="text-muted"
+                  >Column definitions and constraints</small
+                >
               </div>
               <div class="card-body p-0">
                 <div class="table-responsive">
@@ -240,13 +319,21 @@
                     </thead>
                     <tbody>
                       <tr *ngFor="let column of columns">
-                        <td class="fw-medium text-primary">{{ column.column_name }}</td>
-                        <td><span class="badge bg-light text-dark">{{ column.data_type }}</span></td>
-                        <td>{{ column.character_maximum_length || '—' }}</td>
+                        <td class="fw-medium text-primary">
+                          {{ column.column_name }}
+                        </td>
                         <td>
-                          <span class="badge" 
-                                [class.bg-warning]="column.is_nullable === 'YES'" 
-                                [class.bg-danger]="column.is_nullable === 'NO'">
+                          <span class="badge bg-light text-dark">{{
+                            column.data_type
+                          }}</span>
+                        </td>
+                        <td>{{ column.character_maximum_length || "—" }}</td>
+                        <td>
+                          <span
+                            class="badge"
+                            [class.bg-warning]="column.is_nullable === 'YES'"
+                            [class.bg-danger]="column.is_nullable === 'NO'"
+                          >
                             {{ column.is_nullable }}
                           </span>
                         </td>
@@ -263,37 +350,61 @@
       <!-- Tables Tab -->
       <div *ngIf="activeTab === 'tables'" class="tab-content-wrapper">
         <div class="page-header text-center mb-5">
-          <h2 class="display-6 fw-bold text-primary mb-2">Table Data Explorer</h2>
-          <p class="lead text-muted">Browse and explore your table data with an intuitive interface</p>
+          <h2 class="display-6 fw-bold text-primary mb-2">
+            Table Data Explorer
+          </h2>
+          <p class="lead text-muted">
+            Browse and explore your table data with an intuitive interface
+          </p>
         </div>
 
         <!-- Table Selector -->
         <div class="row justify-content-center mb-4">
           <div class="col-md-6">
-            <select class="form-select form-select-lg" [(ngModel)]="selectedTable" (change)="onTableSelected()">
+            <select
+              class="form-select form-select-lg"
+              [(ngModel)]="selectedTable"
+              (change)="onTableSelected()"
+            >
               <option value="">Select a table to explore...</option>
-              <option *ngFor="let table of tables" [value]="table">{{ table }}</option>
+              <option *ngFor="let table of tables" [value]="table">
+                {{ table }}
+              </option>
             </select>
           </div>
         </div>
 
         <!-- Data Table -->
-        <div *ngIf="selectedTable && tableData.length > 0" class="card border-0 shadow-sm">
-          <div class="card-header bg-white d-flex justify-content-between align-items-center">
+        <div
+          *ngIf="selectedTable && tableData.length > 0"
+          class="card border-0 shadow-sm"
+        >
+          <div
+            class="card-header bg-white d-flex justify-content-between align-items-center"
+          >
             <h5 class="mb-0 fw-bold">{{ selectedTable }} Data</h5>
-            <span class="badge bg-primary fs-6">{{ tableData.length }} rows</span>
+            <span class="badge bg-primary fs-6"
+              >{{ tableData.length }} rows</span
+            >
           </div>
           <div class="card-body p-0">
             <div class="table-responsive">
               <table class="table table-hover mb-0">
                 <thead class="table-primary">
                   <tr>
-                    <th *ngFor="let key of getObjectKeys(tableData[0])" class="fw-bold">{{ key }}</th>
+                    <th
+                      *ngFor="let key of getObjectKeys(tableData[0])"
+                      class="fw-bold"
+                    >
+                      {{ key }}
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr *ngFor="let row of tableData">
-                    <td *ngFor="let key of getObjectKeys(row)">{{ row[key] }}</td>
+                    <td *ngFor="let key of getObjectKeys(row)">
+                      {{ row[key] }}
+                    </td>
                   </tr>
                 </tbody>
               </table>
@@ -302,38 +413,119 @@
         </div>
 
         <!-- Empty State -->
-        <div *ngIf="selectedTable && tableData.length === 0 && !isLoading" class="text-center py-5">
-          <i class="bi bi-inbox text-muted mb-3" style="font-size: 4rem;"></i>
+        <div
+          *ngIf="selectedTable && tableData.length === 0 && !isLoading"
+          class="text-center py-5"
+        >
+          <i class="bi bi-inbox text-muted mb-3" style="font-size: 4rem"></i>
           <h4 class="text-muted">No data available</h4>
-          <p class="text-muted">The selected table appears to be empty or inaccessible</p>
+          <p class="text-muted">
+            The selected table appears to be empty or inaccessible
+          </p>
+        </div>
+      </div>
+
+      <!-- Reports Tab -->
+      <div *ngIf="activeTab === 'reports'" class="tab-content-wrapper">
+        <div class="page-header text-center mb-5">
+          <h2 class="display-6 fw-bold text-primary mb-2">Reports Explorer</h2>
+          <p class="lead text-muted">
+            Browse and explore your Reports with an intuitive interface
+          </p>
+        </div>
+
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+          <div *ngFor="let report of reportList" class="col">
+            <div class="card h-100 shadow-sm">
+              <div
+                class="card-body"
+                (click)="getReportData(report)"
+              >
+                <h5 class="card-title text-primary fw-semibold">
+                  {{ report.reportName }}
+                </h5>
+                <!-- <p class="card-text text-muted">ID: {{ report.id }}</p> -->
+              </div>
+            </div>
+          </div>
+        </div>
+        <br>
+        <div
+          *ngIf="selectedReport && reportData.length > 0"
+          class="card border-0 shadow-sm"
+        >
+          <div
+            class="card-header bg-white d-flex justify-content-between align-items-center"
+          >
+            <h5 class="mb-0 fw-bold">{{ selectedReport?.reportName }} Data</h5>
+            <span class="badge bg-primary fs-6"
+              >{{ reportData.length }} rows</span
+            >
+          </div>
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table table-hover mb-0">
+                <thead class="table-primary">
+                  <tr>
+                    <th
+                      *ngFor="let key of getObjectKeys(reportData[0])"
+                      class="fw-bold"
+                    >
+                      {{ key }}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let row of reportData">
+                    <td *ngFor="let key of getObjectKeys(row)">
+                      {{ row[key] }}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
       </div>
 
       <!-- Query Tab -->
       <div *ngIf="activeTab === 'query'" class="tab-content-wrapper">
         <div class="page-header text-center mb-5">
-          <h2 class="display-6 fw-bold text-primary mb-2">Advanced Query Builder</h2>
-          <p class="lead text-muted">Execute custom SQL queries with full control over your data analysis</p>
+          <h2 class="display-6 fw-bold text-primary mb-2">
+            Advanced Query Builder
+          </h2>
+          <p class="lead text-muted">
+            Execute custom SQL queries with full control over your data analysis
+          </p>
         </div>
 
         <!-- Query Editor -->
         <div class="card border-0 shadow-sm mb-4">
-          <div class="card-header bg-white d-flex justify-content-between align-items-center">
+          <div
+            class="card-header bg-white d-flex justify-content-between align-items-center"
+          >
             <h5 class="mb-0 fw-bold">SQL Query Editor</h5>
-            <span class="badge bg-warning text-dark">Only SELECT statements permitted</span>
+            <span class="badge bg-warning text-dark"
+              >Only SELECT statements permitted</span
+            >
           </div>
           <div class="card-body p-0">
-            <textarea 
-              class="form-control border-0 font-monospace" 
+            <textarea
+              class="form-control border-0 font-monospace"
               [(ngModel)]="customQuery"
               placeholder="SELECT * FROM schema.table_name WHERE condition = 'value';"
               rows="8"
-              style="resize: vertical; font-size: 14px;">
+              style="resize: vertical; font-size: 14px"
+            >
             </textarea>
           </div>
           <div class="card-footer bg-light">
             <div class="d-flex gap-2">
-              <button class="btn btn-primary" (click)="runCustomQuery()" [disabled]="!customQuery.trim() || isLoading">
+              <button
+                class="btn btn-primary"
+                (click)="runCustomQuery()"
+                [disabled]="!customQuery.trim() || isLoading"
+              >
                 <i class="bi bi-play-fill me-1"></i>Execute Query
               </button>
               <button class="btn btn-outline-secondary" (click)="clearQuery()">
@@ -345,21 +537,32 @@
 
         <!-- Query Results -->
         <div *ngIf="queryResults.length > 0" class="card border-0 shadow-sm">
-          <div class="card-header bg-white d-flex justify-content-between align-items-center">
+          <div
+            class="card-header bg-white d-flex justify-content-between align-items-center"
+          >
             <h5 class="mb-0 fw-bold">Query Results</h5>
-            <span class="badge bg-success fs-6">{{ queryResults.length }} rows returned</span>
+            <span class="badge bg-success fs-6"
+              >{{ queryResults.length }} rows returned</span
+            >
           </div>
           <div class="card-body p-0">
             <div class="table-responsive">
               <table class="table table-hover mb-0">
                 <thead class="table-primary">
                   <tr>
-                    <th *ngFor="let key of getObjectKeys(queryResults[0])" class="fw-bold">{{ key }}</th>
+                    <th
+                      *ngFor="let key of getObjectKeys(queryResults[0])"
+                      class="fw-bold"
+                    >
+                      {{ key }}
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr *ngFor="let row of queryResults">
-                    <td *ngFor="let key of getObjectKeys(row)">{{ row[key] }}</td>
+                    <td *ngFor="let key of getObjectKeys(row)">
+                      {{ row[key] }}
+                    </td>
                   </tr>
                 </tbody>
               </table>
@@ -368,10 +571,15 @@
         </div>
 
         <!-- No Results -->
-        <div *ngIf="queryResults.length === 0 && customQuery.trim() && !isLoading" class="text-center py-5">
-          <i class="bi bi-search text-muted mb-3" style="font-size: 4rem;"></i>
+        <div
+          *ngIf="queryResults.length === 0 && customQuery.trim() && !isLoading"
+          class="text-center py-5"
+        >
+          <i class="bi bi-search text-muted mb-3" style="font-size: 4rem"></i>
           <h4 class="text-muted">No results found</h4>
-          <p class="text-muted">Your query executed successfully but returned no data</p>
+          <p class="text-muted">
+            Your query executed successfully but returned no data
+          </p>
         </div>
       </div>
     </div>
@@ -379,29 +587,53 @@
 </div>
 
 <!-- Connection Modal -->
-<div class="modal fade" [class.show]="showConnectionModal" [style.display]="showConnectionModal ? 'block' : 'none'" 
-     id="connectionModal" tabindex="-1" aria-labelledby="connectionModalLabel" aria-hidden="true">
+<div
+  class="modal fade"
+  [class.show]="showConnectionModal"
+  [style.display]="showConnectionModal ? 'block' : 'none'"
+  id="connectionModal"
+  tabindex="-1"
+  aria-labelledby="connectionModalLabel"
+  aria-hidden="true"
+>
   <div class="modal-dialog modal-lg modal-dialog-centered">
     <div class="modal-content border-0 shadow">
       <div class="modal-header border-bottom">
         <h5 class="modal-title fw-bold" id="connectionModalLabel">
           <i class="bi bi-hdd-network me-2 text-primary"></i>Connect Data Source
         </h5>
-        <button type="button" class="btn-close" (click)="closeConnectionModal()" aria-label="Close"></button>
+        <button
+          type="button"
+          class="btn-close"
+          (click)="closeConnectionModal()"
+          aria-label="Close"
+        ></button>
       </div>
-      
+
       <div class="modal-body p-4">
         <!-- Compact Connection Tabs -->
-        <ul class="nav nav-pills justify-content-center mb-3" id="connectionTabs" role="tablist">
+        <ul
+          class="nav nav-pills justify-content-center mb-3"
+          id="connectionTabs"
+          role="tablist"
+        >
           <li class="nav-item" role="presentation">
-            <button class="nav-link px-4 py-2" [class.active]="connectionTab === 'database'" 
-                    (click)="connectionTab = 'database'" type="button">
+            <button
+              class="nav-link px-4 py-2"
+              [class.active]="connectionTab === 'database'"
+              (click)="connectionTab = 'database'"
+              type="button"
+            >
               <i class="bi bi-server me-2"></i>Database
             </button>
           </li>
           <li class="nav-item" role="presentation">
-            <button class="nav-link px-4 py-2" [class.active]="connectionTab === 'excel'" 
-                    (click)="connectionTab = 'excel'" type="button">
+            <button
+              class="nav-link px-4 py-2"
+              [class.active]="connectionTab === 'excel'"
+              (click)="connectionTab = 'excel'"
+              type="button"
+            >
               <i class="bi bi-file-earmark-excel me-2"></i>Excel Upload
             </button>
           </li>
@@ -410,8 +642,10 @@
         <!-- Tab Content -->
         <div class="tab-content">
           <!-- Database Tab -->
-          <div *ngIf="connectionTab === 'database'" class="tab-pane fade show active">
-            
+          <div
+            *ngIf="connectionTab === 'database'"
+            class="tab-pane fade show active"
+          >
             <!-- Compact Database Type Switch -->
             <div class="row align-items-center mb-3">
               <div class="col-6">
@@ -419,13 +653,23 @@
               </div>
               <div class="col-6">
                 <div class="db-type-switch">
-                  <div class="form-check form-switch d-flex align-items-center justify-content-end">
-                    <input class="form-check-input me-2" type="checkbox" role="switch" 
-                           id="dbTypeSwitch" 
-                           [checked]="selectedDatabaseType === 'postgresql'"
-                           (change)="toggleDatabaseType()">
+                  <div
+                    class="form-check form-switch d-flex align-items-center justify-content-end"
+                  >
+                    <input
+                      class="form-check-input me-2"
+                      type="checkbox"
+                      role="switch"
+                      id="dbTypeSwitch"
+                      [checked]="selectedDatabaseType === 'postgresql'"
+                      (change)="toggleDatabaseType()"
+                    />
                     <label class="form-check-label small" for="dbTypeSwitch">
-                      <span class="badge bg-primary">{{ selectedDatabaseType === 'sqlserver' ? 'SQL Server' : 'PostgreSQL' }}</span>
+                      <span class="badge bg-primary">{{
+                        selectedDatabaseType === "sqlserver"
+                          ? "SQL Server"
+                          : "PostgreSQL"
+                      }}</span>
                     </label>
                   </div>
                 </div>
@@ -436,63 +680,112 @@
             <form [formGroup]="databaseForm" (ngSubmit)="connectToDatabase()">
               <div class="row g-2">
                 <div class="col-8">
-                  <label for="dbHost" class="form-label small fw-medium">Server Host</label>
-                  <input type="text" class="form-control form-control-sm" id="dbHost" 
-                         formControlName="host" 
-                         [placeholder]="selectedDatabaseType === 'sqlserver' ? 'localhost or server.domain.com' : 'localhost or db.example.com'"
-                         [class.has-value]="databaseForm.get('host')?.value">
+                  <label for="dbHost" class="form-label small fw-medium"
+                    >Server Host</label
+                  >
+                  <input
+                    type="text"
+                    class="form-control form-control-sm"
+                    id="dbHost"
+                    formControlName="host"
+                    [placeholder]="
+                      selectedDatabaseType === 'sqlserver'
+                        ? 'localhost or server.domain.com'
+                        : 'localhost or db.example.com'
+                    "
+                    [class.has-value]="databaseForm.get('host')?.value"
+                  />
                 </div>
                 <div class="col-4">
-                  <label for="dbPort" class="form-label small fw-medium">Port</label>
-                  <input type="number" class="form-control form-control-sm" id="dbPort" 
-                         formControlName="port" 
-                         [placeholder]="selectedDatabaseType === 'sqlserver' ? '1433' : '5432'"
-                         [class.has-value]="databaseForm.get('port')?.value">
+                  <label for="dbPort" class="form-label small fw-medium"
+                    >Port</label
+                  >
+                  <input
+                    type="number"
+                    class="form-control form-control-sm"
+                    id="dbPort"
+                    formControlName="port"
+                    [placeholder]="
+                      selectedDatabaseType === 'sqlserver' ? '1433' : '5432'
+                    "
+                    [class.has-value]="databaseForm.get('port')?.value"
+                  />
                 </div>
-                
+
                 <div class="col-12">
-                  <label for="dbDatabase" class="form-label small fw-medium">Database Name</label>
-                  <input type="text" class="form-control form-control-sm" id="dbDatabase" 
-                         formControlName="database" 
-                         placeholder="Database name"
-                         [class.has-value]="databaseForm.get('database')?.value">
+                  <label for="dbDatabase" class="form-label small fw-medium"
+                    >Database Name</label
+                  >
+                  <input
+                    type="text"
+                    class="form-control form-control-sm"
+                    id="dbDatabase"
+                    formControlName="database"
+                    placeholder="Database name"
+                    [class.has-value]="databaseForm.get('database')?.value"
+                  />
                 </div>
 
                 <div class="col-6">
-                  <label for="dbUsername" class="form-label small fw-medium">Username</label>
-                  <input type="text" class="form-control form-control-sm" id="dbUsername" 
-                         formControlName="username" 
-                         placeholder="Username"
-                         [class.has-value]="databaseForm.get('username')?.value"
-                         autocomplete="username">
+                  <label for="dbUsername" class="form-label small fw-medium"
+                    >Username</label
+                  >
+                  <input
+                    type="text"
+                    class="form-control form-control-sm"
+                    id="dbUsername"
+                    formControlName="username"
+                    placeholder="Username"
+                    [class.has-value]="databaseForm.get('username')?.value"
+                    autocomplete="username"
+                  />
                 </div>
-                
+
                 <div class="col-6">
-                  <label for="dbPassword" class="form-label small fw-medium">Password</label>
+                  <label for="dbPassword" class="form-label small fw-medium"
+                    >Password</label
+                  >
                   <div class="input-group input-group-sm">
-                    <input [type]="showPassword ? 'text' : 'password'" 
-                           class="form-control" id="dbPassword" 
-                           formControlName="password" 
-                           placeholder="Password"
-                           [class.has-value]="databaseForm.get('password')?.value"
-                           autocomplete="current-password">
-                    <button class="btn btn-outline-secondary btn-sm" type="button" 
-                            (click)="togglePasswordVisibility()"
-                            [attr.aria-label]="showPassword ? 'Hide password' : 'Show password'">
-                      <i class="bi" [class.bi-eye]="!showPassword" [class.bi-eye-slash]="showPassword"></i>
+                    <input
+                      [type]="showPassword ? 'text' : 'password'"
+                      class="form-control"
+                      id="dbPassword"
+                      formControlName="password"
+                      placeholder="Password"
+                      [class.has-value]="databaseForm.get('password')?.value"
+                      autocomplete="current-password"
+                    />
+                    <button
+                      class="btn btn-outline-secondary btn-sm"
+                      type="button"
+                      (click)="togglePasswordVisibility()"
+                      [attr.aria-label]="
+                        showPassword ? 'Hide password' : 'Show password'
+                      "
+                    >
+                      <i
+                        class="bi"
+                        [class.bi-eye]="!showPassword"
+                        [class.bi-eye-slash]="showPassword"
+                      ></i>
                     </button>
                   </div>
                 </div>
               </div>
 
               <!-- Compact Connection Test Results -->
-              <div *ngIf="connectionTestResult" class="alert alert-sm mt-3 py-2" 
-                   [class.alert-success]="connectionTestSuccess" 
-                   [class.alert-danger]="!connectionTestSuccess">
+              <div
+                *ngIf="connectionTestResult"
+                class="alert alert-sm mt-3 py-2"
+                [class.alert-success]="connectionTestSuccess"
+                [class.alert-danger]="!connectionTestSuccess"
+              >
                 <div class="d-flex align-items-center">
-                  <i class="bi me-2 small" 
-                     [class.bi-check-circle-fill]="connectionTestSuccess"
-                     [class.bi-x-circle-fill]="!connectionTestSuccess"></i>
+                  <i
+                    class="bi me-2 small"
+                    [class.bi-check-circle-fill]="connectionTestSuccess"
+                    [class.bi-x-circle-fill]="!connectionTestSuccess"
+                  ></i>
                   <small>{{ connectionTestResult }}</small>
                 </div>
               </div>
@@ -500,19 +793,43 @@
           </div>
 
           <!-- Excel Tab -->
-          <div *ngIf="connectionTab === 'excel'" class="tab-pane fade show active">
-            <div class="upload-area-compact text-center p-4 border border-2 border-dashed rounded-3" 
-                 [class.border-success]="selectedFile" 
-                 [class.bg-light]="!selectedFile"
-                 [class.bg-success-subtle]="selectedFile"
-                 (click)="fileInput.click()">
-              <i class="bi bi-cloud-upload text-muted mb-2" style="font-size: 2rem;"></i>
-              <h6 *ngIf="!selectedFile" class="fw-medium">Drop Excel file here</h6>
-              <h6 *ngIf="selectedFile" class="fw-medium text-success">{{ selectedFile.name }}</h6>
-              <p class="small text-muted mb-2">{{ selectedFile ? 'Ready to upload' : 'Supports .xlsx, .xls' }}</p>
-              <input type="file" (change)="onFileSelected($event)" accept=".xlsx,.xls" hidden #fileInput>
-              <button type="button" class="btn btn-outline-primary btn-sm" (click)="fileInput.click(); $event.stopPropagation()">
-                {{ selectedFile ? 'Change' : 'Browse' }}
+          <div
+            *ngIf="connectionTab === 'excel'"
+            class="tab-pane fade show active"
+          >
+            <div
+              class="upload-area-compact text-center p-4 border border-2 border-dashed rounded-3"
+              [class.border-success]="selectedFile"
+              [class.bg-light]="!selectedFile"
+              [class.bg-success-subtle]="selectedFile"
+              (click)="fileInput.click()"
+            >
+              <i
+                class="bi bi-cloud-upload text-muted mb-2"
+                style="font-size: 2rem"
+              ></i>
+              <h6 *ngIf="!selectedFile" class="fw-medium">
+                Drop Excel file here
+              </h6>
+              <h6 *ngIf="selectedFile" class="fw-medium text-success">
+                {{ selectedFile.name }}
+              </h6>
+              <p class="small text-muted mb-2">
+                {{ selectedFile ? "Ready to upload" : "Supports .xlsx, .xls" }}
+              </p>
+              <input
+                type="file"
+                (change)="onFileSelected($event)"
+                accept=".xlsx,.xls"
+                hidden
+                #fileInput
+              />
+              <button
+                type="button"
+                class="btn btn-outline-primary btn-sm"
+                (click)="fileInput.click(); $event.stopPropagation()"
+              >
+                {{ selectedFile ? "Change" : "Browse" }}
               </button>
             </div>
           </div>
@@ -523,35 +840,67 @@
       <div class="modal-footer bg-light border-top">
         <div class="d-flex justify-content-between w-100">
           <div>
-            <button *ngIf="connectionTab === 'database'" type="button" class="btn btn-outline-info btn-sm" 
-                    (click)="testConnection()" 
-                    [disabled]="databaseForm.invalid || isLoading">
-              <span *ngIf="isLoading" class="spinner-border spinner-border-sm me-1" role="status"></span>
+            <button
+              *ngIf="connectionTab === 'database'"
+              type="button"
+              class="btn btn-outline-info btn-sm"
+              (click)="testConnection()"
+              [disabled]="databaseForm.invalid || isLoading"
+            >
+              <span
+                *ngIf="isLoading"
+                class="spinner-border spinner-border-sm me-1"
+                role="status"
+              ></span>
               <i *ngIf="!isLoading" class="bi bi-wifi me-1"></i>
-              {{ isLoading ? 'Testing...' : 'Test' }}
+              {{ isLoading ? "Testing..." : "Test" }}
             </button>
-            <button *ngIf="connectionTab === 'excel'" class="btn btn-outline-secondary btn-sm" (click)="downloadTemplate()">
+            <button
+              *ngIf="connectionTab === 'excel'"
+              class="btn btn-outline-secondary btn-sm"
+              (click)="downloadTemplate()"
+            >
               <i class="bi bi-download me-1"></i>Template
             </button>
           </div>
 
           <div>
-            <button type="button" class="btn btn-secondary btn-sm me-2" (click)="closeConnectionModal()">
+            <button
+              type="button"
+              class="btn btn-secondary btn-sm me-2"
+              (click)="closeConnectionModal()"
+            >
               Cancel
             </button>
-            <button *ngIf="connectionTab === 'database'" type="button" class="btn btn-primary btn-sm" 
-                    (click)="connectToDatabase()"
-                    [disabled]="databaseForm.invalid || isLoading">
-              <span *ngIf="isLoading" class="spinner-border spinner-border-sm me-1" role="status"></span>
+            <button
+              *ngIf="connectionTab === 'database'"
+              type="button"
+              class="btn btn-primary btn-sm"
+              (click)="connectToDatabase()"
+              [disabled]="databaseForm.invalid || isLoading"
+            >
+              <span
+                *ngIf="isLoading"
+                class="spinner-border spinner-border-sm me-1"
+                role="status"
+              ></span>
               <i *ngIf="!isLoading" class="bi bi-plug me-1"></i>
-              {{ isLoading ? 'Connecting...' : 'Connect' }}
+              {{ isLoading ? "Connecting..." : "Connect" }}
             </button>
-            <button *ngIf="connectionTab === 'excel'" type="button" class="btn btn-primary btn-sm" 
-                    (click)="uploadExcel()" 
-                    [disabled]="!selectedFile || isLoading">
-              <span *ngIf="isLoading" class="spinner-border spinner-border-sm me-1" role="status"></span>
+            <button
+              *ngIf="connectionTab === 'excel'"
+              type="button"
+              class="btn btn-primary btn-sm"
+              (click)="uploadExcel()"
+              [disabled]="!selectedFile || isLoading"
+            >
+              <span
+                *ngIf="isLoading"
+                class="spinner-border spinner-border-sm me-1"
+                role="status"
+              ></span>
               <i *ngIf="!isLoading" class="bi bi-upload me-1"></i>
-              {{ isLoading ? 'Uploading...' : 'Upload' }}
+              {{ isLoading ? "Uploading..." : "Upload" }}
             </button>
           </div>
         </div>

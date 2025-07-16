@@ -369,6 +369,7 @@
 }
 
 .card-body {
+  border:none;
   padding: 24px;
 }
 
@@ -391,6 +392,10 @@
   cursor: pointer;
   transition: var(--transition-base);
   border-bottom: 1px solid #f1f5f9;
+}
+
+.table-item:last-child {
+  border-bottom: none;
 }
 
 .table-item:hover {
