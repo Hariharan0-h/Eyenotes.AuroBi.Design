@@ -1,7 +1,18 @@
 import { Component, OnInit, OnDestroy, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { DataService, SqlConnectionCredentials, PostgresConnectionCredentials, TableColumn } from '../../services/data.service';
+import {
+  FormsModule,
+  ReactiveFormsModule,
+  FormBuilder,
+  FormGroup,
+  Validators,
+} from '@angular/forms';
+import {
+  DataService,
+  SqlConnectionCredentials,
+  PostgresConnectionCredentials,
+  TableColumn,
+} from '../../services/data.service';
 import { Subscription, timer } from 'rxjs';
 
 @Component({
@@ -10,7 +21,7 @@ import { Subscription, timer } from 'rxjs';
   imports: [CommonModule, FormsModule, ReactiveFormsModule],
   templateUrl: './home.component.html',
   styleUrl: './home.component.css',
-  encapsulation: ViewEncapsulation.None
+  encapsulation: ViewEncapsulation.None,
 })
 export class HomeComponent implements OnInit, OnDestroy {
   activeTab: string = 'dashboard';
@@ -45,33 +56,40 @@ export class HomeComponent implements OnInit, OnDestroy {
   selectedTable: string = '';
   columns: TableColumn[] = [];
   tableData: any[] = [];
-  
+
+  //Reports
+  selectedReport: any = null;
+  reportList: any[] = [];
+  reportData: any[] = []; 
+
   // Query
   customQuery: string = '';
   queryResults: any[] = [];
 
-  constructor(
-    private dataService: DataService,
-    private fb: FormBuilder
-  ) {
+  constructor(private dataService: DataService, private fb: FormBuilder) {
     // UPDATED: Single unified database form
     this.databaseForm = this.fb.group({
       host: ['', [Validators.required]],
-      port: [1433, [Validators.required, Validators.min(1), Validators.max(65535)]],
+      port: [
+        1433,
+        [Validators.required, Validators.min(1), Validators.max(65535)],
+      ],
       username: ['', [Validators.required]],
       password: ['', [Validators.required]],
-      database: ['', [Validators.required]]
+      database: ['', [Validators.required]],
     });
   }
 
   ngOnInit(): void {
     // Subscribe to connection health monitoring
+    // this.getReportDetails();
     this.healthSubscription.add(
-      this.dataService.connectionHealth$.subscribe(isHealthy => {
+      this.dataService.connectionHealth$.subscribe((isHealthy) => {
         if (this.isConnected !== isHealthy) {
           this.isConnected = isHealthy;
           if (!isHealthy && this.connectionStatus.includes('success')) {
-            this.connectionStatus = 'Connection lost - attempting to reconnect...';
+            this.connectionStatus =
+              'Connection lost - attempting to reconnect...';
           }
         }
       })
@@ -79,7 +97,7 @@ export class HomeComponent implements OnInit, OnDestroy {
 
     // Check initial connection health
     this.checkConnectionHealth();
-    
+
     // Set initial port based on default database type
     this.onDatabaseTypeChange();
   }
@@ -103,7 +121,8 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
 
   toggleDatabaseType(): void {
-    this.selectedDatabaseType = this.selectedDatabaseType === 'sqlserver' ? 'postgresql' : 'sqlserver';
+    this.selectedDatabaseType =
+      this.selectedDatabaseType === 'sqlserver' ? 'postgresql' : 'sqlserver';
     this.onDatabaseTypeChange();
   }
 
@@ -112,27 +131,36 @@ export class HomeComponent implements OnInit, OnDestroy {
     if (this.databaseForm.valid) {
       this.isLoading = true;
       this.connectionTestResult = '';
-      
+
       const credentials = this.databaseForm.value;
       console.log(`Testing ${this.selectedDatabaseType} connection...`);
-      
-      const connectionMethod = this.selectedDatabaseType === 'sqlserver' 
-        ? this.dataService.connectToSqlServer(credentials as SqlConnectionCredentials)
-        : this.dataService.connectToPostgres(credentials as PostgresConnectionCredentials);
-      
+
+      const connectionMethod =
+        this.selectedDatabaseType === 'sqlserver'
+          ? this.dataService.connectToSqlServer(
+              credentials as SqlConnectionCredentials
+            )
+          : this.dataService.connectToPostgres(
+              credentials as PostgresConnectionCredentials
+            );
+
       this.executeWithRetry(async () => {
         return connectionMethod.toPromise();
-      }).then(response => {
-        console.log('Connection test response:', response);
-        this.connectionTestResult = response || 'Connection test successful';
-        this.connectionTestSuccess = this.isSuccessResponse(this.connectionTestResult);
-        this.isLoading = false;
-      }).catch(error => {
-        console.error('Connection test error:', error);
-        this.connectionTestResult = `Test failed: ${error.message}`;
-        this.connectionTestSuccess = false;
-        this.isLoading = false;
-      });
+      })
+        .then((response) => {
+          console.log('Connection test response:', response);
+          this.connectionTestResult = response || 'Connection test successful';
+          this.connectionTestSuccess = this.isSuccessResponse(
+            this.connectionTestResult
+          );
+          this.isLoading = false;
+        })
+        .catch((error) => {
+          console.error('Connection test error:', error);
+          this.connectionTestResult = `Test failed: ${error.message}`;
+          this.connectionTestSuccess = false;
+          this.isLoading = false;
+        });
     }
   }
 
@@ -141,31 +169,47 @@ export class HomeComponent implements OnInit, OnDestroy {
     if (this.databaseForm.valid) {
       this.isLoading = true;
       const credentials = this.databaseForm.value;
-      
-      console.log(`Connecting to ${this.selectedDatabaseType} with:`, credentials);
-      
-      const connectionMethod = this.selectedDatabaseType === 'sqlserver' 
-        ? this.dataService.connectToSqlServer(credentials as SqlConnectionCredentials)
-        : this.dataService.connectToPostgres(credentials as PostgresConnectionCredentials);
-      
+
+      console.log(
+        `Connecting to ${this.selectedDatabaseType} with:`,
+        credentials
+      );
+
+      const connectionMethod =
+        this.selectedDatabaseType === 'sqlserver'
+          ? this.dataService.connectToSqlServer(
+              credentials as SqlConnectionCredentials
+            )
+          : this.dataService.connectToPostgres(
+              credentials as PostgresConnectionCredentials
+            );
+
       this.executeWithRetry(async () => {
         return connectionMethod.toPromise();
-      }).then(response => {
-        console.log(`${this.selectedDatabaseType} connection response:`, response);
-        this.connectionStatus = response || 'Connected successfully';
-        this.isConnected = this.isSuccessResponse(this.connectionStatus);
-        this.isLoading = false;
-        
-        if (this.isConnected) {
-          this.loadTables();
-          this.closeConnectionModal();
-        }
-      }).catch(error => {
-        console.error(`${this.selectedDatabaseType} connection error:`, error);
-        this.connectionStatus = `Error: ${error.message}`;
-        this.isConnected = false;
-        this.isLoading = false;
-      });
+      })
+        .then((response) => {
+          console.log(
+            `${this.selectedDatabaseType} connection response:`,
+            response
+          );
+          this.connectionStatus = response || 'Connected successfully';
+          this.isConnected = this.isSuccessResponse(this.connectionStatus);
+          this.isLoading = false;
+
+          if (this.isConnected) {
+            this.loadTables();
+            this.closeConnectionModal();
+          }
+        })
+        .catch((error) => {
+          console.error(
+            `${this.selectedDatabaseType} connection error:`,
+            error
+          );
+          this.connectionStatus = `Error: ${error.message}`;
+          this.isConnected = false;
+          this.isLoading = false;
+        });
     }
   }
 
@@ -201,12 +245,14 @@ export class HomeComponent implements OnInit, OnDestroy {
         return await operation();
       } catch (error: any) {
         console.error(`Attempt ${attempt} failed:`, error);
-        
+
         if (attempt === this.maxRetries) {
           throw error;
         }
-        
-        await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt) * 1000));
+
+        await new Promise((resolve) =>
+          setTimeout(resolve, Math.pow(2, attempt) * 1000)
+        );
       }
     }
     throw new Error('All retry attempts failed');
@@ -237,89 +283,124 @@ export class HomeComponent implements OnInit, OnDestroy {
     if (tab !== 'dashboard' && !this.isConnected) {
       return;
     }
-    
+
     this.activeTab = tab;
     this.closeMobileSidebar();
-    
+
     if (tab === 'metadata' || tab === 'tables') {
       if (this.isConnected && this.tables.length === 0) {
         this.loadTables();
       }
     }
+    if (tab === 'reports') {
+      this.getReportDetails();
+    }
+  }
+
+  getReportData(report: any) {
+  this.selectedReport = report.reportName;
+  this.dataService.getReportData(report.reportQuery).subscribe({
+    next: (data) => {
+      this.reportData = data;
+    },
+    error: (err) => {
+      console.error('Error fetching report data:', err);
+    },
+  });
+}
+
+  getReportDetails() {
+    this.dataService.getReports().subscribe({
+      next: (reports) => {
+        this.reportList = reports;
+        console.log('Report Data:', reports);
+      },
+      error: (err) => {
+        console.error('Error fetching reports:', err);
+      },
+    });
   }
 
   // Data loading methods
   loadTables(): void {
     this.isLoading = true;
     console.log('Loading tables...');
-    
+
     this.executeWithRetry(async () => {
       return this.dataService.getAllTables().toPromise();
-    }).then(tables => {
-      console.log('Tables response:', tables);
-      this.tables = tables || [];
-      console.log('Loaded tables:', this.tables);
-      this.isLoading = false;
-    }).catch(error => {
-      console.error('Error loading tables:', error);
-      this.tables = [];
-      this.isLoading = false;
-      
-      if (this.tables.length === 0 && this.isConnected) {
-        this.connectionStatus = `Connected but cannot load tables: ${error.message}`;
-      }
-    });
+    })
+      .then((tables) => {
+        console.log('Tables response:', tables);
+        this.tables = tables || [];
+        console.log('Loaded tables:', this.tables);
+        this.isLoading = false;
+      })
+      .catch((error) => {
+        console.error('Error loading tables:', error);
+        this.tables = [];
+        this.isLoading = false;
+
+        if (this.tables.length === 0 && this.isConnected) {
+          this.connectionStatus = `Connected but cannot load tables: ${error.message}`;
+        }
+      });
   }
 
   loadTableColumns(): void {
     console.log('Loading columns for table:', this.selectedTable);
-    
+
     this.executeWithRetry(async () => {
       return this.dataService.getTableColumns(this.selectedTable).toPromise();
-    }).then(columns => {
-      console.log('Columns response:', columns);
-      this.columns = columns || [];
-      console.log('Loaded columns:', this.columns);
-    }).catch(error => {
-      console.error('Error loading columns:', error);
-      this.columns = [];
-    });
+    })
+      .then((columns) => {
+        console.log('Columns response:', columns);
+        this.columns = columns || [];
+        console.log('Loaded columns:', this.columns);
+      })
+      .catch((error) => {
+        console.error('Error loading columns:', error);
+        this.columns = [];
+      });
   }
 
   loadTableData(): void {
     console.log('Loading data for table:', this.selectedTable);
-    
+
     this.executeWithRetry(async () => {
       return this.dataService.getTableData(this.selectedTable).toPromise();
-    }).then(data => {
-      console.log('Table data response:', data);
-      this.tableData = data || [];
-      console.log('Loaded table data:', this.tableData);
-    }).catch(error => {
-      console.error('Error loading table data:', error);
-      this.tableData = [];
-    });
+    })
+      .then((data) => {
+        console.log('Table data response:', data);
+        this.tableData = data || [];
+        console.log('Loaded table data:', this.tableData);
+      })
+      .catch((error) => {
+        console.error('Error loading table data:', error);
+        this.tableData = [];
+      });
   }
 
   runCustomQuery(): void {
     if (this.customQuery.trim()) {
       this.isLoading = true;
       console.log('Running query (exact case):', this.customQuery);
-      
+
       this.executeWithRetry(async () => {
         return this.dataService.runQuery(this.customQuery).toPromise();
-      }).then(results => {
-        console.log('Query response:', results);
-        this.queryResults = results || [];
-        console.log('Query results:', this.queryResults);
-        this.isLoading = false;
-      }).catch(error => {
-        console.error('Error running query:', error);
-        this.queryResults = [];
-        this.isLoading = false;
-        
-        alert(`Query failed: ${error.message}`);
-      });
+      })
+        .then((results) => {
+          console.log('Query response:', results);
+          this.queryResults = results || [];
+          console.log('Query results:', this.queryResults);
+          this.isLoading = false;
+        })
+        .catch((error) => {
+          console.error('Error running query:', error);
+          this.queryResults = [];
+          this.isLoading = false;
+
+          alert(`Query failed: ${error.message}`);
+        });
     }
   }
 
@@ -331,28 +412,30 @@ export class HomeComponent implements OnInit, OnDestroy {
   uploadExcel(): void {
     if (this.selectedFile) {
       this.isLoading = true;
-      
+
       console.log('Uploading Excel file:', this.selectedFile.name);
-      
+
       this.executeWithRetry(async () => {
         return this.dataService.uploadExcel(this.selectedFile!).toPromise();
-      }).then(response => {
-        console.log('Excel upload response:', response);
-        this.connectionStatus = response || 'Excel uploaded successfully';
-        this.isConnected = this.isSuccessResponse(this.connectionStatus);
-        this.isLoading = false;
-        this.selectedFile = null;
-        
-        if (this.isConnected) {
-          this.loadTables();
-          this.closeConnectionModal();
-        }
-      }).catch(error => {
-        console.error('Excel upload error:', error);
-        this.connectionStatus = `Error: ${error.message}`;
-        this.isConnected = false;
-        this.isLoading = false;
-      });
+      })
+        .then((response) => {
+          console.log('Excel upload response:', response);
+          this.connectionStatus = response || 'Excel uploaded successfully';
+          this.isConnected = this.isSuccessResponse(this.connectionStatus);
+          this.isLoading = false;
+          this.selectedFile = null;
+
+          if (this.isConnected) {
+            this.loadTables();
+            this.closeConnectionModal();
+          }
+        })
+        .catch((error) => {
+          console.error('Excel upload error:', error);
+          this.connectionStatus = `Error: ${error.message}`;
+          this.isConnected = false;
+          this.isLoading = false;
+        });
     }
   }
 
@@ -368,7 +451,7 @@ export class HomeComponent implements OnInit, OnDestroy {
       },
       error: (error: any) => {
         console.error('Error downloading template:', error);
-      }
+      },
     });
   }
 
@@ -397,17 +480,17 @@ export class HomeComponent implements OnInit, OnDestroy {
   isSuccessResponse(message: string): boolean {
     const successKeywords = ['success', 'connected', 'created', 'uploaded'];
     const errorKeywords = ['error', 'failed', 'invalid', 'not found'];
-    
+
     const lowerMessage = message.toLowerCase();
-    
-    if (errorKeywords.some(keyword => lowerMessage.includes(keyword))) {
+
+    if (errorKeywords.some((keyword) => lowerMessage.includes(keyword))) {
       return false;
     }
-    
-    if (successKeywords.some(keyword => lowerMessage.includes(keyword))) {
+
+    if (successKeywords.some((keyword) => lowerMessage.includes(keyword))) {
       return true;
     }
-    
+
     return !lowerMessage.includes('error');
   }
 
@@ -423,7 +506,7 @@ export class HomeComponent implements OnInit, OnDestroy {
     console.log('Table Data Length:', this.tableData.length);
     console.log('API Base URL:', this.dataService.baseUrl);
     console.log('=================');
-    
+
     alert(`Debug Info:
 Connection Status: ${this.connectionStatus}
 Is Connected: ${this.isConnected}

@@ -32,6 +32,12 @@ export interface ConnectionHealth {
   timestamp: Date;
 }
 
+export interface Report{
+  id: number;
+  reportName: string;
+  reportQuery: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -139,7 +145,23 @@ export class DataService {
         catchError(this.handleError)
       );
   }
-
+  getReports(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.baseUrl}/Reports/get-report-configurations`)
+      .pipe(
+        catchError(this.handleError)
+      );
+  }
+   getReportData(query: string): Observable<any[]> {
+  return this.http.post<any[]>(
+    `${this.baseUrl}/Reports/get-report-data`,
+    JSON.stringify(query), 
+    {
+      headers: { 'Content-Type': 'application/json' }
+    }
+  ).pipe(
+    catchError(this.handleError)
+  );
+}
   runQuery(query: string): Observable<any[]> {
     console.log('Sending query with exact case:', query);
     const jsonQuery = JSON.stringify(query);
