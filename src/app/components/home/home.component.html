@@ -383,28 +383,24 @@
      id="connectionModal" tabindex="-1" aria-labelledby="connectionModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-lg modal-dialog-centered">
     <div class="modal-content border-0 shadow">
-      <div class="modal-header border-bottom-0 pb-0">
-        <h4 class="modal-title fw-bold" id="connectionModalLabel">Connect Data Source</h4>
+      <div class="modal-header border-bottom">
+        <h5 class="modal-title fw-bold" id="connectionModalLabel">
+          <i class="bi bi-hdd-network me-2 text-primary"></i>Connect Data Source
+        </h5>
         <button type="button" class="btn-close" (click)="closeConnectionModal()" aria-label="Close"></button>
       </div>
       
-      <div class="modal-body">
-        <!-- Connection Tabs -->
-        <ul class="nav nav-pills nav-fill mb-4" id="connectionTabs" role="tablist">
+      <div class="modal-body p-4">
+        <!-- Compact Connection Tabs -->
+        <ul class="nav nav-pills justify-content-center mb-3" id="connectionTabs" role="tablist">
           <li class="nav-item" role="presentation">
-            <button class="nav-link" [class.active]="connectionTab === 'sqlserver'" 
-                    (click)="connectionTab = 'sqlserver'" type="button">
-              <i class="bi bi-server me-2"></i>SQL Server
+            <button class="nav-link px-4 py-2" [class.active]="connectionTab === 'database'" 
+                    (click)="connectionTab = 'database'" type="button">
+              <i class="bi bi-server me-2"></i>Database
             </button>
           </li>
           <li class="nav-item" role="presentation">
-            <button class="nav-link" [class.active]="connectionTab === 'postgresql'" 
-                    (click)="connectionTab = 'postgresql'" type="button">
-              <i class="bi bi-database me-2"></i>PostgreSQL
-            </button>
-          </li>
-          <li class="nav-item" role="presentation">
-            <button class="nav-link" [class.active]="connectionTab === 'excel'" 
+            <button class="nav-link px-4 py-2" [class.active]="connectionTab === 'excel'" 
                     (click)="connectionTab = 'excel'" type="button">
               <i class="bi bi-file-earmark-excel me-2"></i>Excel Upload
             </button>
@@ -413,102 +409,150 @@
 
         <!-- Tab Content -->
         <div class="tab-content">
-          <!-- SQL Server Tab -->
-          <div *ngIf="connectionTab === 'sqlserver'" class="tab-pane fade show active">
-            <form [formGroup]="sqlServerForm" (ngSubmit)="connectToSqlServer()">
-              <div class="row g-3">
-                <div class="col-md-6">
-                  <label for="sqlHost" class="form-label fw-medium">Server Host</label>
-                  <input type="text" class="form-control" id="sqlHost" formControlName="host" placeholder="localhost">
-                </div>
-                <div class="col-md-6">
-                  <label for="sqlPort" class="form-label fw-medium">Port</label>
-                  <input type="number" class="form-control" id="sqlPort" formControlName="port" placeholder="1433">
-                </div>
-                <div class="col-md-6">
-                  <label for="sqlUsername" class="form-label fw-medium">Username</label>
-                  <input type="text" class="form-control" id="sqlUsername" formControlName="username" placeholder="Database user">
-                </div>
-                <div class="col-md-6">
-                  <label for="sqlPassword" class="form-label fw-medium">Password</label>
-                  <input type="password" class="form-control" id="sqlPassword" formControlName="password" placeholder="User password">
-                </div>
-                <div class="col-12">
-                  <label for="sqlDatabase" class="form-label fw-medium">Database Name</label>
-                  <input type="text" class="form-control" id="sqlDatabase" formControlName="database" placeholder="Target database">
+          <!-- Database Tab -->
+          <div *ngIf="connectionTab === 'database'" class="tab-pane fade show active">
+            
+            <!-- Compact Database Type Switch -->
+            <div class="row align-items-center mb-3">
+              <div class="col-6">
+                <label class="form-label fw-medium mb-0">Database Type</label>
+              </div>
+              <div class="col-6">
+                <div class="db-type-switch">
+                  <div class="form-check form-switch d-flex align-items-center justify-content-end">
+                    <input class="form-check-input me-2" type="checkbox" role="switch" 
+                           id="dbTypeSwitch" 
+                           [checked]="selectedDatabaseType === 'postgresql'"
+                           (change)="toggleDatabaseType()">
+                    <label class="form-check-label small" for="dbTypeSwitch">
+                      <span class="badge bg-primary">{{ selectedDatabaseType === 'sqlserver' ? 'SQL Server' : 'PostgreSQL' }}</span>
+                    </label>
+                  </div>
                 </div>
               </div>
-              <div class="d-flex justify-content-end mt-4">
-                <button type="submit" class="btn btn-primary" [disabled]="sqlServerForm.invalid || isLoading">
-                  <span *ngIf="isLoading" class="spinner-border spinner-border-sm me-2" role="status"></span>
-                  <i *ngIf="!isLoading" class="bi bi-plug me-2"></i>
-                  {{ isLoading ? 'Connecting...' : 'Connect to SQL Server' }}
-                </button>
-              </div>
-            </form>
-          </div>
+            </div>
 
-          <!-- PostgreSQL Tab -->
-          <div *ngIf="connectionTab === 'postgresql'" class="tab-pane fade show active">
-            <form [formGroup]="postgresForm" (ngSubmit)="connectToPostgres()">
-              <div class="row g-3">
-                <div class="col-md-6">
-                  <label for="pgHost" class="form-label fw-medium">Server Host</label>
-                  <input type="text" class="form-control" id="pgHost" formControlName="host" placeholder="localhost">
+            <!-- Compact Database Form -->
+            <form [formGroup]="databaseForm" (ngSubmit)="connectToDatabase()">
+              <div class="row g-2">
+                <div class="col-8">
+                  <label for="dbHost" class="form-label small fw-medium">Server Host</label>
+                  <input type="text" class="form-control form-control-sm" id="dbHost" 
+                         formControlName="host" 
+                         [placeholder]="selectedDatabaseType === 'sqlserver' ? 'localhost or server.domain.com' : 'localhost or db.example.com'"
+                         [class.has-value]="databaseForm.get('host')?.value">
                 </div>
-                <div class="col-md-6">
-                  <label for="pgPort" class="form-label fw-medium">Port</label>
-                  <input type="number" class="form-control" id="pgPort" formControlName="port" placeholder="5432">
+                <div class="col-4">
+                  <label for="dbPort" class="form-label small fw-medium">Port</label>
+                  <input type="number" class="form-control form-control-sm" id="dbPort" 
+                         formControlName="port" 
+                         [placeholder]="selectedDatabaseType === 'sqlserver' ? '1433' : '5432'"
+                         [class.has-value]="databaseForm.get('port')?.value">
                 </div>
-                <div class="col-md-6">
-                  <label for="pgUsername" class="form-label fw-medium">Username</label>
-                  <input type="text" class="form-control" id="pgUsername" formControlName="username" placeholder="Database user">
-                </div>
-                <div class="col-md-6">
-                  <label for="pgPassword" class="form-label fw-medium">Password</label>
-                  <input type="password" class="form-control" id="pgPassword" formControlName="password" placeholder="User password">
-                </div>
+                
                 <div class="col-12">
-                  <label for="pgDatabase" class="form-label fw-medium">Database Name</label>
-                  <input type="text" class="form-control" id="pgDatabase" formControlName="database" placeholder="Target database">
+                  <label for="dbDatabase" class="form-label small fw-medium">Database Name</label>
+                  <input type="text" class="form-control form-control-sm" id="dbDatabase" 
+                         formControlName="database" 
+                         placeholder="Database name"
+                         [class.has-value]="databaseForm.get('database')?.value">
+                </div>
+
+                <div class="col-6">
+                  <label for="dbUsername" class="form-label small fw-medium">Username</label>
+                  <input type="text" class="form-control form-control-sm" id="dbUsername" 
+                         formControlName="username" 
+                         placeholder="Username"
+                         [class.has-value]="databaseForm.get('username')?.value"
+                         autocomplete="username">
+                </div>
+                
+                <div class="col-6">
+                  <label for="dbPassword" class="form-label small fw-medium">Password</label>
+                  <div class="input-group input-group-sm">
+                    <input [type]="showPassword ? 'text' : 'password'" 
+                           class="form-control" id="dbPassword" 
+                           formControlName="password" 
+                           placeholder="Password"
+                           [class.has-value]="databaseForm.get('password')?.value"
+                           autocomplete="current-password">
+                    <button class="btn btn-outline-secondary btn-sm" type="button" 
+                            (click)="togglePasswordVisibility()"
+                            [attr.aria-label]="showPassword ? 'Hide password' : 'Show password'">
+                      <i class="bi" [class.bi-eye]="!showPassword" [class.bi-eye-slash]="showPassword"></i>
+                    </button>
+                  </div>
                 </div>
               </div>
-              <div class="d-flex justify-content-end mt-4">
-                <button type="submit" class="btn btn-primary" [disabled]="postgresForm.invalid || isLoading">
-                  <span *ngIf="isLoading" class="spinner-border spinner-border-sm me-2" role="status"></span>
-                  <i *ngIf="!isLoading" class="bi bi-plug me-2"></i>
-                  {{ isLoading ? 'Connecting...' : 'Connect to PostgreSQL' }}
-                </button>
+
+              <!-- Compact Connection Test Results -->
+              <div *ngIf="connectionTestResult" class="alert alert-sm mt-3 py-2" 
+                   [class.alert-success]="connectionTestSuccess" 
+                   [class.alert-danger]="!connectionTestSuccess">
+                <div class="d-flex align-items-center">
+                  <i class="bi me-2 small" 
+                     [class.bi-check-circle-fill]="connectionTestSuccess"
+                     [class.bi-x-circle-fill]="!connectionTestSuccess"></i>
+                  <small>{{ connectionTestResult }}</small>
+                </div>
               </div>
             </form>
           </div>
 
           <!-- Excel Tab -->
           <div *ngIf="connectionTab === 'excel'" class="tab-pane fade show active">
-            <div class="upload-area text-center p-5 border border-2 border-dashed rounded-3" 
+            <div class="upload-area-compact text-center p-4 border border-2 border-dashed rounded-3" 
                  [class.border-success]="selectedFile" 
                  [class.bg-light]="!selectedFile"
                  [class.bg-success-subtle]="selectedFile"
                  (click)="fileInput.click()">
-              <i class="bi bi-cloud-upload text-muted mb-3" style="font-size: 3rem;"></i>
-              <h5 *ngIf="!selectedFile" class="fw-bold">Drop your Excel file here</h5>
-              <h5 *ngIf="selectedFile" class="fw-bold text-success">{{ selectedFile.name }}</h5>
-              <p class="text-muted mb-3">{{ selectedFile ? 'File ready for upload' : 'Supports .xlsx and .xls formats' }}</p>
+              <i class="bi bi-cloud-upload text-muted mb-2" style="font-size: 2rem;"></i>
+              <h6 *ngIf="!selectedFile" class="fw-medium">Drop Excel file here</h6>
+              <h6 *ngIf="selectedFile" class="fw-medium text-success">{{ selectedFile.name }}</h6>
+              <p class="small text-muted mb-2">{{ selectedFile ? 'Ready to upload' : 'Supports .xlsx, .xls' }}</p>
               <input type="file" (change)="onFileSelected($event)" accept=".xlsx,.xls" hidden #fileInput>
-              <button type="button" class="btn btn-outline-primary" (click)="fileInput.click(); $event.stopPropagation()">
-                {{ selectedFile ? 'Change File' : 'Browse Files' }}
+              <button type="button" class="btn btn-outline-primary btn-sm" (click)="fileInput.click(); $event.stopPropagation()">
+                {{ selectedFile ? 'Change' : 'Browse' }}
               </button>
             </div>
-            <div class="d-flex justify-content-between mt-4">
-              <button class="btn btn-outline-secondary" (click)="downloadTemplate()">
-                <i class="bi bi-download me-2"></i>Download Template
-              </button>
-              <button class="btn btn-primary" (click)="uploadExcel()" [disabled]="!selectedFile || isLoading">
-                <span *ngIf="isLoading" class="spinner-border spinner-border-sm me-2" role="status"></span>
-                <i *ngIf="!isLoading" class="bi bi-upload me-2"></i>
-                {{ isLoading ? 'Processing...' : 'Upload Excel File' }}
-              </button>
-            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Compact Modal Footer -->
+      <div class="modal-footer bg-light border-top">
+        <div class="d-flex justify-content-between w-100">
+          <div>
+            <button *ngIf="connectionTab === 'database'" type="button" class="btn btn-outline-info btn-sm" 
+                    (click)="testConnection()" 
+                    [disabled]="databaseForm.invalid || isLoading">
+              <span *ngIf="isLoading" class="spinner-border spinner-border-sm me-1" role="status"></span>
+              <i *ngIf="!isLoading" class="bi bi-wifi me-1"></i>
+              {{ isLoading ? 'Testing...' : 'Test' }}
+            </button>
+            <button *ngIf="connectionTab === 'excel'" class="btn btn-outline-secondary btn-sm" (click)="downloadTemplate()">
+              <i class="bi bi-download me-1"></i>Template
+            </button>
+          </div>
+
+          <div>
+            <button type="button" class="btn btn-secondary btn-sm me-2" (click)="closeConnectionModal()">
+              Cancel
+            </button>
+            <button *ngIf="connectionTab === 'database'" type="button" class="btn btn-primary btn-sm" 
+                    (click)="connectToDatabase()"
+                    [disabled]="databaseForm.invalid || isLoading">
+              <span *ngIf="isLoading" class="spinner-border spinner-border-sm me-1" role="status"></span>
+              <i *ngIf="!isLoading" class="bi bi-plug me-1"></i>
+              {{ isLoading ? 'Connecting...' : 'Connect' }}
+            </button>
+            <button *ngIf="connectionTab === 'excel'" type="button" class="btn btn-primary btn-sm" 
+                    (click)="uploadExcel()" 
+                    [disabled]="!selectedFile || isLoading">
+              <span *ngIf="isLoading" class="spinner-border spinner-border-sm me-1" role="status"></span>
+              <i *ngIf="!isLoading" class="bi bi-upload me-1"></i>
+              {{ isLoading ? 'Uploading...' : 'Upload' }}
+            </button>
           </div>
         </div>
       </div>
